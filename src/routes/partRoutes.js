@@ -1,24 +1,27 @@
 import express from "express";
-import { createPart, getParts } from "../models/Part.js";
+import pool from "../config/db.js";
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
-  const { name, price, stock, distributorId } = req.body;
+router.post("/", async(req,res)=>{
 
-  const part = await createPart(
-    name,
-    price,
-    stock,
-    distributorId
-  );
+ const {distributorId,name,price,stock} = req.body;
 
-  res.json(part);
+ const result = await pool.query(
+ "INSERT INTO parts(distributor_id,name,price,stock) VALUES($1,$2,$3,$4) RETURNING *",
+ [distributorId,name,price,stock]
+ );
+
+ res.json(result.rows[0]);
+
 });
 
-router.get("/", async (req, res) => {
-  const parts = await getParts();
-  res.json(parts);
+router.get("/", async(req,res)=>{
+
+ const result = await pool.query("SELECT * FROM parts");
+
+ res.json(result.rows);
+
 });
 
 export default router;
