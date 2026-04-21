@@ -17,6 +17,10 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+app.get("/", (req, res) => {
+  res.send("AutoFix API running")
+})
+
 app.use("/users", userRoutes)
 app.use("/auth", authRoutes)
 app.use("/orders", orderRoutes)
@@ -24,10 +28,6 @@ app.use("/parts", partRoutes)
 app.use("/vehicles", vehicleRoutes)
 app.use("/workshops", workshopRoutes)
 app.use("/delivery", deliveryRoutes)
-
-app.get("/", (req, res) => {
-  res.send("AutoFix API running")
-})
 
 const PORT = process.env.PORT || 10000
 
