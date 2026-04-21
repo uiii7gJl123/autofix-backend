@@ -1,14 +1,45 @@
-import express from "express";
-import pool from "../config/db.js";
+import express from "express"
+import pool from "../config/db.js"
 
-const router = express.Router();
+const router = express.Router()
 
-router.get("/", async(req,res)=>{
+router.get("/users", async (req,res)=>{
 
- const result = await pool.query("SELECT id,name,phone,role FROM users");
+const {email}=req.query
 
- res.json(result.rows);
+if(email){
 
-});
+const result = await pool.query(
+"SELECT * FROM users WHERE email=$1",
+[email]
+)
 
-export default router;
+return res.json(result.rows)
+
+}
+
+const result = await pool.query("SELECT * FROM users")
+
+res.json(result.rows)
+
+})
+
+router.post("/users", async (req,res)=>{
+
+const {name,phone,email,password,roles}=req.body
+
+const result = await pool.query(
+
+`INSERT INTO users(name,phone,email,password,roles)
+VALUES($1,$2,$3,$4,$5)
+RETURNING *`,
+
+[name,phone,email,password,roles]
+
+)
+
+res.json(result.rows[0])
+
+})
+
+export default router
