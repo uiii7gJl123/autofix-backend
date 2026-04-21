@@ -3,43 +3,46 @@ import pool from "../config/db.js"
 
 const router = express.Router()
 
-router.get("/users", async (req,res)=>{
+// GET users
+router.get("/", async (req, res) => {
+  try {
+    const { email } = req.query
 
-const {email}=req.query
+    if (email) {
+      const result = await pool.query(
+        "SELECT * FROM users WHERE email=$1",
+        [email]
+      )
+      return res.json(result.rows)
+    }
 
-if(email){
+    const result = await pool.query("SELECT * FROM users")
+    res.json(result.rows)
 
-const result = await pool.query(
-"SELECT * FROM users WHERE email=$1",
-[email]
-)
-
-return res.json(result.rows)
-
-}
-
-const result = await pool.query("SELECT * FROM users")
-
-res.json(result.rows)
-
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: "server error" })
+  }
 })
 
-router.post("/users", async (req,res)=>{
+// CREATE user
+router.post("/", async (req, res) => {
+  try {
+    const { name, phone, email, password, roles } = req.body
 
-const {name,phone,email,password,roles}=req.body
+    const result = await pool.query(
+      `INSERT INTO users(name,phone,email,password,roles)
+       VALUES($1,$2,$3,$4,$5)
+       RETURNING *`,
+      [name, phone, email, password, roles || []]
+    )
 
-const result = await pool.query(
+    res.json(result.rows[0])
 
-`INSERT INTO users(name,phone,email,password,roles)
-VALUES($1,$2,$3,$4,$5)
-RETURNING *`,
-
-[name,phone,email,password,roles]
-
-)
-
-res.json(result.rows[0])
-
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: "failed to create user" })
+  }
 })
 
 export default router
