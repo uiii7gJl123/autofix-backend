@@ -3,7 +3,7 @@ import pool from "../config/db.js"
 
 const router = express.Router()
 
-// GET users
+// GET all users OR by email
 router.get("/", async (req, res) => {
   try {
     const { email } = req.query
@@ -20,7 +20,7 @@ router.get("/", async (req, res) => {
     res.json(result.rows)
 
   } catch (err) {
-    console.log(err)
+    console.error(err)
     res.status(500).json({ error: "server error" })
   }
 })
@@ -31,8 +31,8 @@ router.post("/", async (req, res) => {
     const { name, phone, email, password, roles } = req.body
 
     const result = await pool.query(
-      `INSERT INTO users(name,phone,email,password,roles)
-       VALUES($1,$2,$3,$4,$5)
+      `INSERT INTO users(name, phone, email, password, roles)
+       VALUES ($1,$2,$3,$4,$5)
        RETURNING *`,
       [name, phone, email, password, roles || []]
     )
@@ -40,7 +40,7 @@ router.post("/", async (req, res) => {
     res.json(result.rows[0])
 
   } catch (err) {
-    console.log(err)
+    console.error(err)
     res.status(500).json({ error: "failed to create user" })
   }
 })
