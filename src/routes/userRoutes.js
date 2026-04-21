@@ -13,11 +13,23 @@ router.get("/", async (req, res) => {
         "SELECT * FROM users WHERE email = $1",
         [email]
       )
-      return res.json(result.rows)
+
+      const formatted = result.rows.map(u => ({
+        ...u,
+        roles: u.roles ? JSON.parse(u.roles) : []
+      }))
+
+      return res.json(formatted)
     }
 
     const result = await pool.query("SELECT * FROM users")
-    res.json(result.rows)
+
+    const formatted = result.rows.map(u => ({
+      ...u,
+      roles: u.roles ? JSON.parse(u.roles) : []
+    }))
+
+    res.json(formatted)
 
   } catch (err) {
     console.error("GET USERS ERROR:", err)
@@ -47,11 +59,15 @@ router.post("/", async (req, res) => {
         phone || null,
         email,
         password || null,
-        roles ? JSON.stringify(roles) : "[]"
+        JSON.stringify(roles || [])
       ]
     )
 
-    res.json(result.rows[0])
+    const user = result.rows[0]
+
+    user.roles = JSON.parse(user.roles)
+
+    res.json(user)
 
   } catch (err) {
     console.error("POST USERS ERROR:", err)
