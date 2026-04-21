@@ -3,14 +3,14 @@ import pool from "../config/db.js"
 
 const router = express.Router()
 
-// GET all users OR by email
+// GET users (all or by email)
 router.get("/", async (req, res) => {
   try {
     const { email } = req.query
 
     if (email) {
       const result = await pool.query(
-        "SELECT * FROM users WHERE email=$1",
+        "SELECT * FROM users WHERE email = $1",
         [email]
       )
       return res.json(result.rows)
@@ -20,28 +20,47 @@ router.get("/", async (req, res) => {
     res.json(result.rows)
 
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: "server error" })
+    console.error("GET USERS ERROR:", err)
+    res.status(500).json({
+      error: err.message,
+      code: err.code
+    })
   }
 })
+
 
 // CREATE user
 router.post("/", async (req, res) => {
   try {
     const { name, phone, email, password, roles } = req.body
 
+    if (!email) {
+      return res.status(400).json({ error: "email is required" })
+    }
+
     const result = await pool.query(
       `INSERT INTO users(name, phone, email, password, roles)
        VALUES ($1,$2,$3,$4,$5)
        RETURNING *`,
-      [name, phone, email, password, roles || []]
+      [
+        name || null,
+        phone || null,
+        email,
+        password || null,
+        roles ? JSON.stringify(roles) : "[]"
+      ]
     )
 
     res.json(result.rows[0])
 
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: "failed to create user" })
+    console.error("POST USERS ERROR:", err)
+
+    res.status(500).json({
+      error: err.message,
+      code: err.code,
+      detail: err.detail
+    })
   }
 })
 
