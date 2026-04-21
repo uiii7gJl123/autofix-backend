@@ -1,48 +1,36 @@
 import express from "express"
-import pool from "../config/db.js"
+import cors from "cors"
+import dotenv from "dotenv"
 
-const router = express.Router()
+import userRoutes from "./routes/userRoutes.js"
+import authRoutes from "./routes/authRoutes.js"
+import orderRoutes from "./routes/orderRoutes.js"
+import partRoutes from "./routes/partRoutes.js"
+import vehicleRoutes from "./routes/vehicleRoutes.js"
+import workshopRoutes from "./routes/workshopRoutes.js"
+import deliveryRoutes from "./routes/deliveryRoutes.js"
 
-// GET /users
-router.get("/", async (req,res)=>{
+dotenv.config()
 
-const {email}=req.query
+const app = express()
 
-if(email){
+app.use(cors())
+app.use(express.json())
 
-const result = await pool.query(
-"SELECT * FROM users WHERE email=$1",
-[email]
-)
+app.use("/users", userRoutes)
+app.use("/auth", authRoutes)
+app.use("/orders", orderRoutes)
+app.use("/parts", partRoutes)
+app.use("/vehicles", vehicleRoutes)
+app.use("/workshops", workshopRoutes)
+app.use("/delivery", deliveryRoutes)
 
-return res.json(result.rows)
-
-}
-
-const result = await pool.query("SELECT * FROM users")
-
-res.json(result.rows)
-
+app.get("/", (req, res) => {
+  res.send("AutoFix API running")
 })
 
+const PORT = process.env.PORT || 10000
 
-// POST /users
-router.post("/", async (req,res)=>{
-
-const {name,phone,email,password,roles}=req.body
-
-const result = await pool.query(
-
-`INSERT INTO users(name,phone,email,password,roles)
-VALUES($1,$2,$3,$4,$5)
-RETURNING *`,
-
-[name,phone,email,password,roles]
-
-)
-
-res.json(result.rows[0])
-
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT)
 })
-
-export default router
