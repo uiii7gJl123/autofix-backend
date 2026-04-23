@@ -49,23 +49,21 @@ email / phone / username
 
 async function loginUser() {
 
-  const identifier = document
-    .getElementById("identifierInput")
-    .value
-    .trim()
+  const identifierInput = document.getElementById("identifierInput")
+  const passwordInput = document.getElementById("passwordInput")
+  const errorBox = document.getElementById("errorMsg")
 
-  const password = document
-    .getElementById("passwordInput")
-    .value
+  if (!identifierInput || !passwordInput) return
 
-  const error = document.getElementById("errorMsg")
+  const identifier = identifierInput.value.trim()
+  const password = passwordInput.value
 
-  error.style.display = "none"
+  errorBox.style.display = "none"
 
   if (!identifier || !password) {
 
-    error.innerText = "ادخل البيانات كاملة"
-    error.style.display = "block"
+    errorBox.innerText = "ادخل البيانات كاملة"
+    errorBox.style.display = "block"
     return
 
   }
@@ -91,22 +89,32 @@ async function loginUser() {
 
     if (!res.ok) {
 
-      error.innerText = data.error || "فشل تسجيل الدخول"
-      error.style.display = "block"
+      errorBox.innerText = data.error || "فشل تسجيل الدخول"
+      errorBox.style.display = "block"
       return
 
     }
 
-    localStorage.setItem("user", JSON.stringify(data))
+    /* حفظ بيانات المستخدم */
+    localStorage.setItem("user", JSON.stringify(data.user))
 
-    location = "dashboard.html"
+    /* حفظ التوكن */
+    if (data.token) {
+      localStorage.setItem("token", data.token)
+    }
+
+    /* حفظ آخر معرف استخدمه */
+    localStorage.setItem("tempIdentifier", identifier)
+
+    /* الانتقال للوحة التحكم */
+    window.location.href = "dashboard.html"
 
   } catch (err) {
 
-    console.error(err)
+    console.error("LOGIN ERROR:", err)
 
-    error.innerText = "خطأ في الاتصال بالخادم"
-    error.style.display = "block"
+    errorBox.innerText = "خطأ في الاتصال بالخادم"
+    errorBox.style.display = "block"
 
   }
 
