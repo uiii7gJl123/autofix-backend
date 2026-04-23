@@ -1,20 +1,18 @@
 import express from "express"
 import pool from "../config/db.js"
+import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
 
 const router = express.Router()
 
 /*
 POST /auth/login
 تسجيل الدخول عبر:
-email
-phone
-username
+email / phone / username
 */
 
 router.post("/login", async (req, res) => {
-
   try {
-
     const { identifier, password } = req.body
 
     if (!identifier || !password) {
@@ -23,6 +21,7 @@ router.post("/login", async (req, res) => {
       })
     }
 
+    // البحث عن المستخدم
     const result = await pool.query(
       `SELECT * FROM users
        WHERE email = $1
@@ -40,24 +39,37 @@ router.post("/login", async (req, res) => {
 
     const user = result.rows[0]
 
-    if (user.password !== password) {
+    // التحقق من كلمة المرور (آمن)
+    const passwordMatch = await bcrypt.compare(password, user.password)
+
+    if (!passwordMatch) {
       return res.status(401).json({
         error: "invalid password"
       })
     }
 
-    res.json(user)
+    // إنشاء token
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    )
+
+    // إزالة كلمة المرور من الرد
+    delete user.password
+
+    res.json({
+      user,
+      token
+    })
 
   } catch (err) {
-
     console.error("LOGIN ERROR:", err)
 
     res.status(500).json({
       error: "server error"
     })
-
   }
-
 })
 
 export default router
