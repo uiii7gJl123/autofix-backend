@@ -14,13 +14,27 @@ dotenv.config()
 
 const app = express()
 
-app.use(cors())
+// مهم جدًا لبعض بيئات الإنتاج
+app.set("trust proxy", 1)
+
+// Middleware
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}))
+
 app.use(express.json())
 
+// Health check
 app.get("/", (req, res) => {
-  res.send("AutoFix API running")
+  res.status(200).json({
+    status: "ok",
+    message: "AutoFix API running"
+  })
 })
 
+// Routes
 app.use("/users", userRoutes)
 app.use("/auth", authRoutes)
 app.use("/orders", orderRoutes)
@@ -28,6 +42,21 @@ app.use("/parts", partRoutes)
 app.use("/vehicles", vehicleRoutes)
 app.use("/workshops", workshopRoutes)
 app.use("/delivery", deliveryRoutes)
+
+// 404 handler (مهم جدًا)
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route not found"
+  })
+})
+
+// Error handler (يحمي السيرفر من الانهيار)
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err)
+  res.status(500).json({
+    error: "Internal server error"
+  })
+})
 
 const PORT = process.env.PORT || 10000
 
