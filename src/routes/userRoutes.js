@@ -43,13 +43,33 @@ router.get("/", async (req, res) => {
 
 // CREATE user
 router.post("/", async (req, res) => {
+
   try {
+
     const { name, phone, email, password, roles } = req.body
 
     if (!email) {
-      return res.status(400).json({ error: "email is required" })
+      return res.status(400).json({
+        error: "email is required"
+      })
     }
 
+    // التحقق من وجود المستخدم مسبقاً
+    const checkUser = await pool.query(
+      `SELECT id FROM users
+       WHERE email = $1
+       OR phone = $2
+       LIMIT 1`,
+      [email, phone || null]
+    )
+
+    if (checkUser.rows.length > 0) {
+      return res.status(409).json({
+        error: "user already exists"
+      })
+    }
+
+    // إنشاء المستخدم
     const result = await pool.query(
       `INSERT INTO users(name, phone, email, password, roles)
        VALUES ($1,$2,$3,$4,$5)
@@ -65,11 +85,12 @@ router.post("/", async (req, res) => {
 
     const user = result.rows[0]
 
-    user.roles = JSON.parse(user.roles)
+    user.roles = user.roles ? JSON.parse(user.roles) : []
 
     res.json(user)
 
   } catch (err) {
+
     console.error("POST USERS ERROR:", err)
 
     res.status(500).json({
@@ -77,7 +98,9 @@ router.post("/", async (req, res) => {
       code: err.code,
       detail: err.detail
     })
+
   }
+
 })
 
 export default router
